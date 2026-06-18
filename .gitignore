@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# pywin32 generated COM wrappers (regenerated locally from the SW typelib)
+gen_py/
+
+# SolidWorks scratch / backups
+*.SLDPRT
+*.SLDASM
+*.SLDDRW
+~$*
+
+# Claude Code local settings (machine-specific permissions, not project config)
+.claude/settings.local.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
