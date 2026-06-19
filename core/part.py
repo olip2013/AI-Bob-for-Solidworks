@@ -276,20 +276,48 @@ class Part:
         return res
 
     def modify_dimension(self, dimension_name: str, new_value: float) -> Result:
-        """Change a dimension by its semantic name and rebuild."""
-        # Parameter("name@feature") addresses the dimension. We stored the short
-        # name; SolidWorks resolves "name" if unique, else "name@Sketch1".
-        param = self.model.Parameter(dimension_name)
-        if param is None:
-            # Try to find a fully-qualified match.
+        """Change a dimension by its semantic name and rebuild.
+
+        SolidWorks stores a dimension's full name as ``short@OwnerFeature`` (e.g.
+        ``width@Sketch1``), so ``Parameter("width")`` returns nothing. We instead
+        locate the dimension object directly by its short name and set its value,
+        which also lets us convert angular vs. linear units correctly.
+        """
+        dim = self._find_dimension(dimension_name)
+        if dim is None:
             return Result.fail(f"dimension {dimension_name!r} not found")
-        old = units.from_meters(param.SystemValue, self.units)
-        param.SystemValue = units.to_meters(new_value, self.units)
+
+        is_angle = dim.GetType() == 1  # swDimensionType angular
+        old = (units.rad_to_deg(dim.SystemValue) if is_angle
+               else units.from_meters(dim.SystemValue, self.units))
+        new_sys = (units.deg_to_rad(new_value) if is_angle
+                   else units.to_meters(new_value, self.units))
+        # SetSystemValue3(value, swSetValue_InThisConfiguration=2, configNames)
+        dim.SetSystemValue3(new_sys, 2, None)
+
         rebuild_errors = self._rebuild()
         res = Result.ok(old_value=old, new_value=new_value)
         res.rebuild_errors = rebuild_errors
         res.success = not rebuild_errors
         return res
+
+    def _find_dimension(self, short_name: str):
+        """Return the IDimension whose short name matches, or None.
+
+        Walks every feature's display dimensions — robust to the ``@Owner``
+        qualification SolidWorks adds to the full name.
+        """
+        feat = _typed.cast(self.model.FirstFeature(), "IFeature")
+        while feat is not None:
+            dd = _typed.cast(feat.GetFirstDisplayDimension(), "IDisplayDimension")
+            while dd is not None:
+                dim = _typed.cast(dd.GetDimension2(0), "IDimension")
+                if dim is not None and dim.Name == short_name:
+                    return dim
+                dd = _typed.cast(
+                    feat.GetNextDisplayDimension(dd), "IDisplayDimension")
+            feat = _typed.cast(feat.GetNextFeature(), "IFeature")
+        return None
 
     # ------------------------------------------------------------ features
     def _extrude(self, sketch_id, depth, direction, cut: bool,

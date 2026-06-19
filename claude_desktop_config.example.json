@@ -1,0 +1,15 @@
+{
+  "_comment": "Example Claude Desktop MCP config. Copy the mcpServers block into your real claude_desktop_config.json and adjust 'cwd' to where you cloned this repo.",
+  "mcpServers": {
+    "solidworks-generator": {
+      "command": "python",
+      "args": ["-m", "mcp_server.server"],
+      "cwd": "C:/Users/olive/Desktop/Claude For SolidWorks"
+    },
+    "swapi-pilot": {
+      "_comment": "Companion API-reference MCP (https://github.com/arthurle3210/swapi-pilot-solidworks-mcp). Third-party hosted endpoint; no code vendored here.",
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://swapi-pilot.com/mcp"]
+    }
+  }
+}

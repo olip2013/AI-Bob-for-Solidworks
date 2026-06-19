@@ -9,6 +9,9 @@ env/
 # pywin32 generated COM wrappers (regenerated locally from the SW typelib)
 gen_py/
 
+# Smoke-test scratch output
+smoke_out.txt
+
 # SolidWorks scratch / backups
 *.SLDPRT
 *.SLDASM

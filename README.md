@@ -57,6 +57,40 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
+## Recommended companion: swapi-pilot (SolidWorks API reference MCP)
+
+[swapi-pilot](https://github.com/arthurle3210/swapi-pilot-solidworks-mcp) is a
+separate, hosted MCP server that gives the model live access to the SolidWorks
+API docs, code examples, and enum values (`search_solidworks_api`,
+`get_api_detail`, `get_enum`, ...). It is purely a *reference* server — it does
+not drive SolidWorks. It pairs well with this project:
+
+- **swapi-pilot** = the reference manual (knows the API)
+- **this project** = the hands (executes in SolidWorks)
+
+With both connected, the model can look up the correct call/enum via swapi-pilot
+and then run it through our tools. Add it alongside the generator:
+
+```json
+{
+  "mcpServers": {
+    "solidworks-generator": {
+      "command": "python",
+      "args": ["-m", "mcp_server.server"],
+      "cwd": "C:/Users/olive/Desktop/Claude For SolidWorks"
+    },
+    "swapi-pilot": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://swapi-pilot.com/mcp"]
+    }
+  }
+}
+```
+
+> Note: swapi-pilot is a third-party, externally hosted server with no license
+> declared. We only *use* its public endpoint here — no code from it is vendored
+> into this repo. See its repository for terms and current setup instructions.
+
 ## Tool surface (v1)
 
 `create_part`, `create_sketch`, `add_line`, `add_rectangle`, `add_circle`,
