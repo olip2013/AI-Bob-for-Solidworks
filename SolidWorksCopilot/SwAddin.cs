@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swconst;
 using SolidWorks.Interop.swpublished;
 using SolidWorksCopilot.UI;
 
@@ -43,6 +44,12 @@ public class SwAddin : ISwAddin
             Log("ConnectToSW: start");
             SwApp = (ISldWorks)ThisSW;
             Log($"ConnectToSW: got ISldWorks, rev={SwApp.RevisionNumber()}");
+
+            // Stop SolidWorks popping the "Modify" dialog on every dimension a
+            // script creates — scripts set values programmatically, so the
+            // interactive prompt would otherwise pause execution mid-run.
+            SwApp.SetUserPreferenceToggle(
+                (int)swUserPreferenceToggle_e.swInputDimValOnCreate, false);
 
             _form = new CopilotForm(SwApp);
             _form.Show();
