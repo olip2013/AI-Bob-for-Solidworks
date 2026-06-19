@@ -15,6 +15,8 @@ using SolidWorksCopilot.Scripting;
 
 namespace SolidWorksCopilot.UI;
 
+// Plain WinForms control hosted inside CopilotForm. Constructed directly
+// (not via COM), so no COM/ActiveX attributes are needed.
 public class CopilotPanel : UserControl
 {
     private readonly ISldWorks _swApp;

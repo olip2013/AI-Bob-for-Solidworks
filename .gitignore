@@ -12,6 +12,10 @@ gen_py/
 # .NET build artifacts
 SolidWorksBridge/bin/
 SolidWorksBridge/obj/
+SolidWorksCopilot/bin/
+SolidWorksCopilot/obj/
+bin/
+obj/
 
 # Smoke-test scratch output
 smoke_out.txt
