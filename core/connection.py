@@ -1,82 +1,35 @@
-"""Connecting to SOLIDWORKS over COM.
-
-Two paths:
-  * attach to an already-running instance (preferred — does not disturb the
-    user's session), via the running object table;
-  * otherwise launch a fresh instance via Dispatch.
-
-Both yield a SolidWorksSession wrapping ISldWorks.
-"""
+"""Connect to SolidWorks via the C# bridge process."""
 
 from __future__ import annotations
 
-import pythoncom
-import win32com.client
-
-from . import _typed
-
-PROG_ID = "SldWorks.Application"
+from .bridge import get_bridge
 
 
 class SolidWorksError(RuntimeError):
-    """Raised when SOLIDWORKS cannot be reached or a COM call fails fatally."""
+    """Raised when SolidWorks cannot be reached."""
 
 
 class SolidWorksSession:
-    """A live connection to the SOLIDWORKS application object (ISldWorks)."""
+    """Thin handle returned by connect(). Owns no COM state — the bridge does."""
 
-    def __init__(self, sw_app):
-        self.app = sw_app
+    def __init__(self, version: str) -> None:
+        self._version = version
 
     @property
     def version(self) -> str:
-        # RevisionNumber resolves as a method under early binding and as a
-        # property under late binding; tolerate both.
-        try:
-            rev = self.app.RevisionNumber
-            return str(rev() if callable(rev) else rev)
-        except Exception:  # noqa: BLE001 - best-effort metadata only
-            return "unknown"
-
-    def open_parts(self) -> list:
-        """Currently open ModelDoc2 documents (any type)."""
-        docs = []
-        doc = self.app.GetFirstDocument()
-        while doc is not None:
-            docs.append(doc)
-            doc = doc.GetNext()
-        return docs
-
-
-def _try_attach():
-    """Attach to a running SOLIDWORKS instance, or return None if none is up."""
-    try:
-        return win32com.client.GetActiveObject(PROG_ID)
-    except pythoncom.com_error:
-        return None
-
-
-def _launch(visible: bool):
-    try:
-        app = win32com.client.Dispatch(PROG_ID)
-    except pythoncom.com_error as exc:  # noqa: PERF203
-        raise SolidWorksError(
-            f"could not launch SOLIDWORKS ({PROG_ID}). Is it installed?"
-        ) from exc
-    app.Visible = visible
-    return app
+        return self._version
 
 
 def connect(launch_if_needed: bool = True, visible: bool = True) -> SolidWorksSession:
-    """Return a SolidWorksSession.
+    """Start the C# bridge (if needed) and attach to SolidWorks.
 
-    Tries to attach to a running instance first. If none is running and
-    ``launch_if_needed`` is True, starts one (this can take a minute or two on a
-    cold start while SOLIDWORKS boots).
+    On first call this compiles and launches the bridge, which then attaches
+    to a running SolidWorks instance or starts one.  Subsequent calls in the
+    same process reuse the already-running bridge.
     """
-    app = _try_attach()
-    if app is None:
-        if not launch_if_needed:
-            raise SolidWorksError("SOLIDWORKS is not running and launch is disabled")
-        app = _launch(visible)
-    return SolidWorksSession(app)
+    bridge = get_bridge()
+    result = bridge.send(op="connect")
+    if not result.get("success"):
+        errs = result.get("errors", ["unknown error"])
+        raise SolidWorksError(f"Could not connect to SolidWorks: {errs[0]}")
+    return SolidWorksSession(version=result.get("version", "unknown"))

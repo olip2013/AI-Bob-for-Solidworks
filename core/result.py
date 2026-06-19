@@ -28,6 +28,15 @@ class Result:
     def fail(cls, *errors: str, **data: Any) -> "Result":
         return cls(success=False, data=data, errors=list(errors))
 
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "Result":
+        r = cls(success=bool(d.get("success", False)))
+        r.errors = d.get("errors", [])
+        r.rebuild_errors = d.get("rebuild_errors", [])
+        r.data = {k: v for k, v in d.items()
+                  if k not in ("success", "errors", "rebuild_errors")}
+        return r
+
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
             "success": self.success,

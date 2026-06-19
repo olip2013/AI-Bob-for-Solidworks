@@ -1,14 +1,15 @@
-"""core — Python SolidWorks COM automation library.
+"""core — SolidWorks automation via the C# SolidWorksBridge process.
 
-Standalone and AI-free: this layer knows nothing about MCP or Claude. It wraps
-the SolidWorks COM API (via pywin32) behind a small, testable surface that the
-mcp_server/ layer composes into tools.
+The COM layer lives entirely in the C# bridge (SolidWorksBridge/Program.cs).
+Python communicates with it over JSON stdin/stdout, which eliminates the
+pywin32 dispatch issues (EnsureDispatch, CastTo, early-binding hacks) we had
+when driving COM directly from Python.
 
-Public surface:
+Public surface (unchanged from the old pywin32 version):
     connect()            -> SolidWorksSession
-    SolidWorksSession    live connection to a running/launched SOLIDWORKS
+    SolidWorksSession    lightweight handle; bridge owns the COM state
     Part                 a single open part document
-    units                mm/in <-> meters conversion helpers
+    Result               { success, errors, rebuild_errors, **data }
 """
 
 from .connection import connect, SolidWorksSession

@@ -6,8 +6,12 @@ __pycache__/
 venv/
 env/
 
-# pywin32 generated COM wrappers (regenerated locally from the SW typelib)
+# pywin32 generated COM wrappers (no longer used — kept in case of rollback)
 gen_py/
+
+# .NET build artifacts
+SolidWorksBridge/bin/
+SolidWorksBridge/obj/
 
 # Smoke-test scratch output
 smoke_out.txt
